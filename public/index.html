@@ -7,72 +7,98 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 50px;
-            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
         }
-        input {
-            width: 300px;
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        input[type="url"] {
+            width: 100%;
             padding: 10px;
             margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
         }
         button {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: #007BFF;
+            background-color: #4CAF50;
             color: white;
+            padding: 12px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: #45a049;
+        }
+        .message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>Audio Downloader</h1>
-    <h1>Get Your Audio Downloaded</h1>
-    <form id="download-form">
-        <input type="text" id="url" name="url" placeholder="Enter YouTube URL" required />
-        <br />
-        <button type="submit">Download Audio</button>
-    </form>
-    <p id="message"></p>
+    <div class="container">
+        <h1>YouTube Audio Downloader</h1>
+        <form id="downloadForm">
+            <input type="url" id="youtubeUrl" placeholder="Enter YouTube URL" required>
+            <button type="submit">Download Audio</button>
+        </form>
+        <div id="errorMessage" class="message"></div>
+    </div>
 
     <script>
-        document.getElementById('download-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
+        document.getElementById('downloadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
 
-            const url = document.getElementById('url').value;
-            const message = document.getElementById('message');
-            message.textContent = 'Processing...';
+            const url = document.getElementById('youtubeUrl').value;
+            const errorMessage = document.getElementById('errorMessage');
 
-            try {
-                const response = await fetch('/download', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ url }),
-                });
+            // Clear previous error messages
+            errorMessage.textContent = '';
 
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const downloadUrl = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = 'YourAudio.mp3';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    message.textContent = 'Download complete!';
-                } else {
-                    const errorMessage = await response.text();
-                    message.textContent = `Error: ${errorMessage}`;
-                }
-            } catch (error) {
-                message.textContent = 'An unexpected error occurred.';
-                console.error('Error:', error);
+            if (!url) {
+                errorMessage.textContent = 'Please enter a valid YouTube URL.';
+                return;
             }
+
+            fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/downloads/YourAudio.mp3'; // Automatically trigger download
+                } else {
+                    response.text().then(text => {
+                        errorMessage.textContent = text;
+                    });
+                }
+            })
+            .catch(err => {
+                errorMessage.textContent = 'Something went wrong: ' + err.message;
+            });
         });
     </script>
 </body>
